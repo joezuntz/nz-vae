@@ -3,7 +3,7 @@ import nz_vae.lae as lae
 import tensorflow as tf
 
 
-def generate_data(input_file = "nz_realization_array.npy"):
+def generate_data(input_file = "data/nz_realization_array.npy", output_file="data/dirichlet_theory_vectors.txt"):
     # input data is normalized n(z)
     # output data is normalized data vector
 
@@ -16,7 +16,7 @@ def generate_data(input_file = "nz_realization_array.npy"):
     input_data = (input_data - mean_input) / std_input
 
     # output shape is (nrealizations, ndata)
-    output_data = np.loadtxt("dirichlet_theory_vectors.txt")
+    output_data = np.loadtxt()
 
     # also normalise the output data
     mean_output = output_data.mean(axis=0)
