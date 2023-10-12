@@ -42,32 +42,26 @@ def make_lae_model(nbin, nz, ndata, latent_dim, verbose=False):
 
 def make_conv_model(nbin, nz, ndata, latent_dim, verbose=False):
     encoder_inputs = keras.Input(shape=(nbin, nz))
-    # rows = nbin
-    # cols = nz
     x = tf.keras.layers.Reshape((nbin, nz, 1))(encoder_inputs)
-    x = tf.keras.layers.Conv2D(64, (1, 20), activation='relu', padding='valid', data_format='channels_last')(x)
-    x = tf.keras.layers.Conv2D(32, (1, 20), activation='relu', padding='valid', data_format='channels_last')(x)
-    x = tf.keras.layers.Flatten()(x)
-    x = layers.Dense(16, activation="relu")(x)
+    x = layers.Conv2D(32, 3, activation="relu", strides=2, padding="same")(x)
+    x = layers.Conv2D(64, 3, activation="relu", strides=2, padding="same")(x)
+    x = layers.Flatten()(x)
+    x = layers.Dense(latent_dim, activation="relu")(x)
     z_mean = layers.Dense(latent_dim, name="z_mean")(x)
     z_log_var = layers.Dense(latent_dim, name="z_log_var")(x)
     z = Sampling()([z_mean, z_log_var])
     encoder = keras.Model(encoder_inputs, [z_mean, z_log_var, z], name="encoder")
 
-    latent_inputs = keras.Input(shape=(latent_dim,))
-    x = layers.Dense(16, activation="relu")(latent_inputs)
-    x = layers.Dense(32, activation="relu")(x)
-    x = layers.Dense(64, activation="relu")(x)
-    x = layers.Dense(64, activation="relu")(x)
+    decoder_inputs = keras.Input(shape=(latent_dim,))
+    x = layers.Dense(64, activation="relu")(decoder_inputs)
     x = layers.Reshape((64, 1))(x)
-    x = layers.Conv1DTranspose(32, 10, activation='relu', padding='valid')(x)
-    x = layers.Conv1DTranspose(32, 5, activation='relu', padding='valid')(x)
+    x = layers.Conv1DTranspose(64, 3, activation="relu", padding="same")(x)
+    x = layers.Conv1DTranspose(32, 3, activation="relu", padding="same")(x)
     x = layers.Flatten()(x)
-    # x = layers.Dense(64, activation="relu")(x)
     x = layers.Dense(ndata, activation="relu")(x)
     decoder_outputs = x    
 
-    decoder = keras.Model(latent_inputs, decoder_outputs, name="decoder")
+    decoder = keras.Model(decoder_inputs, decoder_outputs, name="decoder")
 
     if verbose:
         encoder.summary()
