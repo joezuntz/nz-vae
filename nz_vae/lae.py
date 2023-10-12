@@ -102,6 +102,9 @@ class LAE(keras.Model):
             z_mean, z_log_var, z = self.encoder(nzs)
             predicted_data_vectors = self.decoder(z)
             reconstruction_loss = tf.reduce_mean(tf.reduce_sum(tf.square(data_vectors - predicted_data_vectors), axis=1))
+
+            outmin = tf.reduce_min(predicted_data_vectors)
+            tf.print("outmin", outmin)
             # mean of total square errors
             # loss from how different the z values are from a normal distribution
             kl_loss1 = -0.5 * (1 + z_log_var - tf.square(z_mean) - tf.exp(z_log_var))
