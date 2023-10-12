@@ -6,62 +6,29 @@ import json
 import matplotlib.pyplot as plt
 from .vae import save_model, Sampling
 
-def make_lae_model(nbin, nz, ndata, latent_dim, verbose=False):
-    encoder_inputs = keras.Input(shape=(nbin, nz))
-    # x = tf.keras.layers.Reshape((nbin, nz, 1))(encoder_inputs)
-    # x = tf.keras.layers.Conv2D(64, (3, 21), activation='relu', padding='valid', data_format='channels_last')(x)
-    # x = tf.keras.layers.Conv2D(32, (3, 21), activation='relu', padding='valid', data_format='channels_last')(x)
-    # x = tf.keras.layers.Flatten()(x)
-    x = layers.Reshape((nbin * nz,))(encoder_inputs)
-    x = layers.Dense(32, activation="relu")(x)
-    x = layers.Dense(32, activation="relu")(x)
-    x = layers.Dense(16, activation="relu")(x)
-    z_mean = layers.Dense(latent_dim, name="z_mean")(x)
-    z_log_var = layers.Dense(latent_dim, name="z_log_var")(x)
-
-    z = Sampling()([z_mean, z_log_var])
-    encoder = keras.Model(encoder_inputs, [z_mean, z_log_var, z], name="encoder")
-
-    latent_inputs = keras.Input(shape=(latent_dim,))
-    x = layers.Dense(16, activation="relu")(latent_inputs)
-    x = layers.Dense(32, activation="relu")(x)
-    x = layers.Dense(32, activation="relu")(x)
-    x = layers.Dense(32, activation="relu")(x)
-    x = layers.Dense(ndata, activation="relu")(x)
-
-    decoder_outputs = x
-
-    decoder = keras.Model(latent_inputs, decoder_outputs, name="decoder")
-    save_model('models/lae1', encoder, decoder, latent_dim)
-
-    if verbose:
-        encoder.summary()
-        decoder.summary()
-
-    return encoder, decoder
-
 def make_conv_model(nbin, nz, ndata, latent_dim, verbose=False):
     encoder_inputs = keras.Input(shape=(nbin, nz))
     x = tf.keras.layers.Reshape((nbin, nz, 1))(encoder_inputs)
-    x = layers.Conv2D(32, 3, activation="relu", strides=2, padding="same")(x)
-    x = layers.Conv2D(64, 3, activation="relu", strides=2, padding="same")(x)
+    x = layers.Conv2D(32, 3, strides=1, padding="same")(x)
+    x = layers.Conv2D(64, 3, strides=1, padding="same")(x)
     x = layers.Flatten()(x)
-    x = layers.Dense(latent_dim, activation="relu")(x)
+    x = layers.Dense(latent_dim)(x)
     z_mean = layers.Dense(latent_dim, name="z_mean")(x)
     z_log_var = layers.Dense(latent_dim, name="z_log_var")(x)
     z = Sampling()([z_mean, z_log_var])
     encoder = keras.Model(encoder_inputs, [z_mean, z_log_var, z], name="encoder")
 
     decoder_inputs = keras.Input(shape=(latent_dim,))
-    x = layers.Dense(64, activation="relu")(decoder_inputs)
+    x = layers.Dense(64)(decoder_inputs)
     x = layers.Reshape((64, 1))(x)
-    x = layers.Conv1DTranspose(64, 3, activation="relu", padding="same")(x)
-    x = layers.Conv1DTranspose(32, 3, activation="relu", padding="same")(x)
+    x = layers.Conv1DTranspose(64, 3, padding="same")(x)
+    x = layers.Conv1DTranspose(32, 3, padding="same")(x)
     x = layers.Flatten()(x)
-    x = layers.Dense(ndata, activation="relu")(x)
+    x = layers.Dense(ndata)(x)
     decoder_outputs = x    
 
     decoder = keras.Model(decoder_inputs, decoder_outputs, name="decoder")
+
 
     if verbose:
         encoder.summary()
@@ -103,8 +70,6 @@ class LAE(keras.Model):
             predicted_data_vectors = self.decoder(z)
             reconstruction_loss = tf.reduce_mean(tf.reduce_sum(tf.square(data_vectors - predicted_data_vectors), axis=1))
 
-            outmin = tf.reduce_min(predicted_data_vectors)
-            tf.print("outmin", outmin)
             # mean of total square errors
             # loss from how different the z values are from a normal distribution
             kl_loss1 = -0.5 * (1 + z_log_var - tf.square(z_mean) - tf.exp(z_log_var))
