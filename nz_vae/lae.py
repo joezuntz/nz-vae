@@ -59,8 +59,11 @@ def make_conv_model(nbin, nz, ndata, latent_dim, verbose=False):
     x = layers.Dense(32, activation="relu")(x)
     x = layers.Dense(64, activation="relu")(x)
     x = layers.Dense(64, activation="relu")(x)
-    x = layers.Dense(128, activation="relu")(x)
-    x = layers.Dense(128, activation="relu")(x)
+    x = layers.Reshape((64, 1))(x)
+    x = layers.Conv1DTranspose(32, 10, activation='relu', padding='valid')(x)
+    x = layers.Conv1DTranspose(32, 5, activation='relu', padding='valid')(x)
+    x = layers.Flatten()(x)
+    # x = layers.Dense(64, activation="relu")(x)
     x = layers.Dense(ndata, activation="relu")(x)
     decoder_outputs = x    
 
@@ -80,7 +83,6 @@ class LAE(keras.Model):
         self.decoder = decoder
         self.kl_weight = kl_weight
         self.latent_dim = latent_dim
-        self.recon_loss_function = keras.losses.MeanSquaredError()
         self.total_loss_tracker = keras.metrics.Mean(name="total_loss")
         self.reconstruction_loss_tracker = keras.metrics.Mean(
             name="reconstruction_loss"
@@ -106,7 +108,7 @@ class LAE(keras.Model):
             z_mean, z_log_var, z = self.encoder(nzs)
             predicted_data_vectors = self.decoder(z)
             reconstruction_loss = tf.reduce_mean(tf.reduce_sum(tf.square(data_vectors - predicted_data_vectors), axis=1))
-            # reconstruction_loss = self.recon_loss_function(data_vectors, predicted_data_vectors)
+            # mean of total square errors
             # loss from how different the z values are from a normal distribution
             kl_loss1 = -0.5 * (1 + z_log_var - tf.square(z_mean) - tf.exp(z_log_var))
             kl_loss = tf.reduce_mean(tf.reduce_sum(kl_loss1, axis=1))  * self.kl_weight
