@@ -59,7 +59,8 @@ def make_conv_model(nbin, nz, ndata, latent_dim, verbose=False):
     x = layers.Dense(32, activation="relu")(x)
     x = layers.Dense(64, activation="relu")(x)
     x = layers.Dense(64, activation="relu")(x)
-    x = layers.Dense(64, activation="relu")(x)
+    x = layers.Dense(128, activation="relu")(x)
+    x = layers.Dense(128, activation="relu")(x)
     x = layers.Dense(ndata, activation="relu")(x)
     decoder_outputs = x    
 
