@@ -1,0 +1,33 @@
+Omega_c: 0.2199999
+Omega_b: 0.0448
+h: 0.71
+n_s: 0.963
+sigma8: 0.8
+A_s: null
+Omega_k: 0.0
+Omega_g: 4.901957e-05
+Neff: 3.046
+m_nu: 0.0
+mass_split: normal
+w0: -1.0
+wa: 0.0
+T_CMB: 2.725
+T_ncdm: 0.71611
+bcm_log10Mc: 14.079181246047625
+bcm_etab: 0.5
+bcm_ks: 55.0
+mu_0: 0
+sigma_0: 0
+c1_mg: 1
+c2_mg: 1
+lambda_mg: 0
+z_mg: null
+df_mg: null
+extra_parameters:
+  emu:
+    neutrinos: strict
+transfer_function: boltzmann_camb
+matter_power_spectrum: halofit
+baryons_power_spectrum: nobaryons
+mass_function: tinker10
+halo_concentration: duffy2008

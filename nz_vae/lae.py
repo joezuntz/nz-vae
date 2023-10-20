@@ -4,6 +4,7 @@ from tensorflow.keras import layers
 import numpy as np
 import json
 import matplotlib.pyplot as plt
+import h5py
 from .vae import save_model, Sampling
 
 def make_conv_model(nbin, nz, ndata, latent_dim, verbose=False):
@@ -38,12 +39,15 @@ def make_conv_model(nbin, nz, ndata, latent_dim, verbose=False):
 
 
 class LAE(keras.Model):
-    def __init__(self, encoder, decoder, latent_dim,  kl_weight=1, **kwargs):
+    def __init__(self, encoder, decoder, nbin, nz, ndata, latent_dim,  kl_weight=1, **kwargs):
         super(LAE, self).__init__(**kwargs)
         self.encoder = encoder
         self.decoder = decoder
         self.kl_weight = kl_weight
         self.latent_dim = latent_dim
+        self.nbin = nbin
+        self.nz = nz
+        self.ndata = ndata
         self.total_loss_tracker = keras.metrics.Mean(name="total_loss")
         self.reconstruction_loss_tracker = keras.metrics.Mean(
             name="reconstruction_loss"
@@ -58,9 +62,6 @@ class LAE(keras.Model):
             self.kl_loss_tracker,
         ]
     
-    @staticmethod
-    def normalize_nz(nz):
-        return tf.linalg.normalize(nz, axis=(2))[0]
 
     def train_step(self, data):
         nzs, data_vectors = data
@@ -89,12 +90,7 @@ class LAE(keras.Model):
             "reconstruction_loss": self.reconstruction_loss_tracker.result(),
             "kl_loss": self.kl_loss_tracker.result(),
         }
-    
-    
-    def fit_to_nz_data(self, nz_data, likelihoods, epochs, batch_size=2400):
-        self.compile(optimizer=keras.optimizers.Adam())
-        history = self.fit((nz_data, likelihoods), epochs=epochs, batch_size=batch_size, verbose=0)        
-        return history
+        
 
     def plot_history(self, history, log=False):
         plotter = plt.semilogy if log else plt.plot
@@ -111,4 +107,29 @@ class LAE(keras.Model):
         plt.xlabel("Epoch")
         plt.ylabel("Total Loss")        
     
-    
+    def save_lae(self, filename):
+        self.save_weights(filename)
+        with h5py.File(filename, "r+") as f:
+            g = f.create_group("lae_metadata")
+            g.attrs["nbin"] = self.nbin
+            g.attrs["nz"] = self.nz
+            g.attrs["ndata"] = self.ndata
+            g.attrs["latent_dim"] = self.latent_dim
+            g.attrs["kl_weight"] = self.kl_weight
+
+    @classmethod
+    def load_lae(cls, filename):
+        with h5py.File(filename, "r") as f:
+            g = f["lae_metadata"]
+            nbin = g.attrs["nbin"]
+            nz = g.attrs["nz"]
+            ndata = g.attrs["ndata"]
+            latent_dim = g.attrs["latent_dim"]
+            kl_weight = g.attrs["kl_weight"]
+
+        encoder, decoder = make_conv_model(nbin, nz, ndata, latent_dim)
+        model = cls(encoder=encoder, decoder=decoder, nbin=nbin, nz=nz, ndata=ndata, latent_dim=latent_dim, kl_weight=kl_weight)
+        model.compile(optimizer=tf.keras.optimizers.legacy.Adam())
+        model.built = True
+        model.load_weights(filename)
+        return model

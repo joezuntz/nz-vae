@@ -1,13 +1,13 @@
 import numpy as np
-import nz_vae.lae as lae
+from . import lae
 import tensorflow as tf
 import pickle
 
-def generate_data(input_file = "data/nz_realization_array.npy", output_file="data/dirichlet_theory_vectors.npy"):
+def generate_data(input_file, output_file):
     print(f"Loading data from {input_file} and {output_file}")
     
     # shape is (nrealizations, ntomo, nz)
-    input_data = np.load(input_file)
+    input_data = np.load(input_file)['arr_0']
 
     # normalise the input data
     mean_input = input_data.mean(axis=0)
@@ -17,7 +17,9 @@ def generate_data(input_file = "data/nz_realization_array.npy", output_file="dat
     print("Loaded input data")
     
     # output shape is (nrealizations, ndata)
-    output_data = np.load(output_file)
+    output_zip = np.load(output_file, allow_pickle=True)['arr_0'].item()
+    print(output_zip.keys())
+    output_data = output_zip['theory_vectors']
 
     # also normalise the output data
     mean_output = output_data.mean(axis=0)
@@ -30,13 +32,12 @@ def generate_data(input_file = "data/nz_realization_array.npy", output_file="dat
 
 
 
-def main(nepoch=1000, batch_size=200):
-    input_data, output_data, _, _ = generate_data()
-    nreal = input_data.shape[0]
+def main(nz_realization_file, data_vector_file, trained_model_file, history_file, latent_dim = 16, nepoch=1000, batch_size=200):
+    input_data, output_data, _, _ = generate_data(input_file=nz_realization_file, output_file=data_vector_file)
     nbin = input_data.shape[1]
     nz = input_data.shape[2]
     ndata = output_data.shape[1]
-    latent_dim = 16
+    
     
     encoder, decoder = lae.make_conv_model(nbin, nz, ndata, latent_dim, verbose=True)
     model = lae.LAE(encoder=encoder, decoder=decoder, latent_dim=latent_dim,)
@@ -48,10 +49,10 @@ def main(nepoch=1000, batch_size=200):
     except KeyboardInterrupt:
         pass
 
-    model.save_weights(f"lae_weights_dim{latent_dim}_eps{nepoch}_bat{batch_size}_real{nreal}.hdf5")
+    model.save_lae(trained_model_file)
 
     if history is not None:
-        with open(f'history_dim{latent_dim}_eps{nepoch}_bat{batch_size}_real{nreal}.pkl', 'wb') as f:
+        with open(history_file, 'wb') as f:
             pickle.dump(history.history, f)
 
 
