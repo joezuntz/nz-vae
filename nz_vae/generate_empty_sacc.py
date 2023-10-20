@@ -14,7 +14,7 @@ import os
 
 
 def generate_empty_sacc(nz_z_file, nz_realization_file, sacc_file):
-    mask_name = "data/lsst_binary_mask.fits"
+    # mask_name = "data/lsst_binary_mask.fits"
     workspace_name = "data/workspace_{}.fits"
 
     # set up, we consider two mocks
@@ -41,8 +41,9 @@ def generate_empty_sacc(nz_z_file, nz_realization_file, sacc_file):
     # set-up directories
 
     # read in mask
-    mask = hp.read_map(mask_name, verbose=False)
-    nside = hp.npix2nside(mask.size)
+    # mask = hp.read_map(mask_name, verbose=False)
+    # nside = hp.npix2nside(mask.size)
+    nside = 2048
 
     n_eff = np.array([n_eff_tot / num_z_bins] * num_z_bins)  # n_eff per tomographic bin
     n_ell = sigma_e**2.0 / n_eff
