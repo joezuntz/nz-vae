@@ -40,7 +40,7 @@ def main(nz_realization_file, data_vector_file, trained_model_file, history_file
     
     
     encoder, decoder = lae.make_conv_model(nbin, nz, ndata, latent_dim, verbose=True)
-    model = lae.LAE(encoder=encoder, decoder=decoder, latent_dim=latent_dim,)
+    model = lae.LAE(encoder=encoder, decoder=decoder, latent_dim=latent_dim,nbin=nbin, nz=nz, ndata=ndata)
     model.compile(optimizer=tf.keras.optimizers.legacy.Adam())
 
     history = None

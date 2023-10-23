@@ -48,8 +48,10 @@ def main(
     d = dv_generated - y0
     generated_chi2 = np.einsum("ki,ij,kj->k", d, P, d)
 
-    plt.hist(original_chi2, bins=100, histtype='step', label="original", density=1, range=(0, 5))
-    plt.hist(generated_chi2, bins=100, histtype='step', label="generated", density=1, range=(0, 5))
+    chi2_max = np.percentile(original_chi2, 95)
+
+    plt.hist(original_chi2, bins=100, histtype='step', label="original", density=1, range=(0, chi2_max))
+    plt.hist(generated_chi2, bins=100, histtype='step', label="generated", density=1, range=(0, chi2_max))
     plt.legend()
     plt.savefig(chi2_plot)
     plt.close()
