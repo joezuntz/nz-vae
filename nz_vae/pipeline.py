@@ -52,7 +52,7 @@ def fit_model(model_name, latent_dim, nepoch, batch_size, nsample):
     # Fit model mapping n(z) to latent space to data vectors
     spec = f"{model_name}_dim{latent_dim}_eps{nepoch}_bat{batch_size}_real{nsample}"
     fit_model_lae.main(
-        mdoel_name,
+        model_name,
         nz_realization_file,
         data_vector_file,
         trained_model_file=trained_model_file.format(spec=spec),
@@ -106,7 +106,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("stage", choices=["gen_nz", "gen_sacc", "gen_dv", "fit", "sim", "mcmc"])
-    parser.add_argument("--latent_dim", type=int, default=12, help="Latent dimension size")
+    parser.add_argument("--latent-dim", type=int, default=12, help="Latent dimension size")
     parser.add_argument("--model-name", type=str, default='conv1', help="Name of model")
     args = parser.parse_args()
     main(args.stage, args.latent_dim, args.model_name)

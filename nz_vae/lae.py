@@ -157,7 +157,7 @@ class LAE(keras.Model):
         }
         make_function = functions[model_name]
         encoder, decoder = make_function(nbin, nz, ndata, latent_dim)
-        model = cls(encoder=encoder, decoder=decoder, nbin=nbin, nz=nz, ndata=ndata, latent_dim=latent_dim, kl_weight)
+        model = cls(encoder=encoder, decoder=decoder, nbin=nbin, nz=nz, ndata=ndata, latent_dim=latent_dim, kl_weight=kl_weight)
         model.compile(optimizer=tf.keras.optimizers.legacy.Adam())
         return model
 

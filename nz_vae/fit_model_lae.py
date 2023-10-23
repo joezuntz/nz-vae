@@ -32,13 +32,13 @@ def generate_data(input_file, output_file):
 
 
 
-def main(nz_realization_file, data_vector_file, trained_model_file, history_file, latent_dim = 16, nepoch=1000, batch_size=200):
+def main(model_name, nz_realization_file, data_vector_file, trained_model_file, history_file, latent_dim = 16, nepoch=1000, batch_size=200):
     input_data, output_data, _, _ = generate_data(input_file=nz_realization_file, output_file=data_vector_file)
     nbin = input_data.shape[1]
     nz = input_data.shape[2]
     ndata = output_data.shape[1]
     
-    model = lae.LAE.make_lae(nbin, nz, ndata, latent_dim)
+    model = lae.LAE.make_lae(model_name, nbin, nz, ndata, latent_dim)
     
     history = None
     try:
