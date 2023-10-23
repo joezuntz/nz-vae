@@ -106,7 +106,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("stage", choices=["gen_nz", "gen_sacc", "gen_dv", "fit", "sim", "mcmc"])
-    parser.add_argument("--latent_dim", type=int, default=12, "Latent dimension size")
-    parser.add_argument("--model-name", type=str, default='conv1', "Name of model")
+    parser.add_argument("--latent_dim", type=int, default=12, help="Latent dimension size")
+    parser.add_argument("--model-name", type=str, default='conv1', help="Name of model")
     args = parser.parse_args()
     main(args.stage, args.latent_dim, args.model_name)

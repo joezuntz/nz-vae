@@ -38,11 +38,8 @@ def main(nz_realization_file, data_vector_file, trained_model_file, history_file
     nz = input_data.shape[2]
     ndata = output_data.shape[1]
     
+    model = lae.LAE.make_lae(nbin, nz, ndata, latent_dim)
     
-    encoder, decoder = lae.make_conv_model(nbin, nz, ndata, latent_dim, verbose=True)
-    model = lae.LAE(encoder=encoder, decoder=decoder, latent_dim=latent_dim,nbin=nbin, nz=nz, ndata=ndata)
-    model.compile(optimizer=tf.keras.optimizers.legacy.Adam())
-
     history = None
     try:
         history = model.fit(input_data, output_data, epochs=nepoch, batch_size=batch_size, verbose=True)

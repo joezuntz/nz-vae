@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import h5py
 from .vae import save_model, Sampling
 
-def make_conv_model(nbin, nz, ndata, latent_dim, verbose=False):
+def make_conv1_model(nbin, nz, ndata, latent_dim, verbose=True):
     encoder_inputs = keras.Input(shape=(nbin, nz))
     x = tf.keras.layers.Reshape((nbin, nz, 1))(encoder_inputs)
     x = layers.Conv2D(32, 3, strides=1, padding="same")(x)
@@ -30,12 +30,44 @@ def make_conv_model(nbin, nz, ndata, latent_dim, verbose=False):
 
     decoder = keras.Model(decoder_inputs, decoder_outputs, name="decoder")
 
+    if verbose:
+        encoder.summary()
+        decoder.summary()
+
+    return encoder, decoder
+
+def make_conv2_model(nbin, nz, ndata, latent_dim, verbose=True):
+    encoder_inputs = keras.Input(shape=(nbin, nz))
+    x = tf.keras.layers.Reshape((nbin, nz, 1))(encoder_inputs)
+    x = layers.Conv2D(32, 3, strides=1, padding="same")(x)
+    x = layers.Conv2D(32, 3, strides=2, padding="same")(x)
+    x = layers.Conv2D(32, 3, strides=4, padding="same")(x)
+    x = layers.Flatten()(x)
+    x = layers.Dense(latent_dim)(x)
+    x = layers.Dense(latent_dim)(x)
+    z_mean = layers.Dense(latent_dim, name="z_mean")(x)
+    z_log_var = layers.Dense(latent_dim, name="z_log_var")(x)
+    z = Sampling()([z_mean, z_log_var])
+    encoder = keras.Model(encoder_inputs, [z_mean, z_log_var, z], name="encoder")
+
+    decoder_inputs = keras.Input(shape=(latent_dim,))
+    x = layers.Dense(64)(decoder_inputs)
+    x = layers.Reshape((64, 1))(x)
+    x = layers.Conv1DTranspose(32, 3, strides=3, padding="same")(x)
+    x = layers.Conv1DTranspose(32, 3, strides=2, padding="same")(x)
+    x = layers.Conv1DTranspose(32, 3, strides=1, padding="same")(x)
+    x = layers.Flatten()(x)
+    x = layers.Dense(ndata)(x)
+    decoder_outputs = x    
+
+    decoder = keras.Model(decoder_inputs, decoder_outputs, name="decoder")
 
     if verbose:
         encoder.summary()
         decoder.summary()
 
     return encoder, decoder
+
 
 
 class LAE(keras.Model):
@@ -118,7 +150,19 @@ class LAE(keras.Model):
             g.attrs["kl_weight"] = self.kl_weight
 
     @classmethod
-    def load_lae(cls, filename):
+    def make_lae(cls, model_name, nbin, nz, ndata, latent_dim, kl_weight=1):
+        functions = {
+            "conv1": make_conv1_model,
+            "conv2": make_conv2_model,
+        }
+        make_function = functions[model_name]
+        encoder, decoder = make_function(nbin, nz, ndata, latent_dim)
+        model = cls(encoder=encoder, decoder=decoder, nbin=nbin, nz=nz, ndata=ndata, latent_dim=latent_dim, kl_weight)
+        model.compile(optimizer=tf.keras.optimizers.legacy.Adam())
+        return model
+
+    @classmethod
+    def load_lae(cls, model_name, filename):
         with h5py.File(filename, "r") as f:
             g = f["lae_metadata"]
             nbin = g.attrs["nbin"]
@@ -127,9 +171,7 @@ class LAE(keras.Model):
             latent_dim = g.attrs["latent_dim"]
             kl_weight = g.attrs["kl_weight"]
 
-        encoder, decoder = make_conv_model(nbin, nz, ndata, latent_dim)
-        model = cls(encoder=encoder, decoder=decoder, nbin=nbin, nz=nz, ndata=ndata, latent_dim=latent_dim, kl_weight=kl_weight)
-        model.compile(optimizer=tf.keras.optimizers.legacy.Adam())
+        model = cls.make_lae(model_name, nbin, nz, ndata, latent_dim, kl_weight)
         model.built = True
         model.load_weights(filename)
         return model
