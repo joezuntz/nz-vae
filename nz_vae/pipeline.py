@@ -66,7 +66,7 @@ def fit_model(model_name, latent_dim, nepoch, batch_size, nsample):
 def generate_simulated_data_vectors(model_name, latent_dim, nepoch, batch_size, nsample):
     # Generate data vectors from latent space and compute their likelihoods as a test,
     # and visualize stuff
-    spec = f"{model_namne}_dim{latent_dim}_eps{nepoch}_bat{batch_size}_real{nsample}"
+    spec = f"{model_name}_dim{latent_dim}_eps{nepoch}_bat{batch_size}_real{nsample}"
     model_file = trained_model_file.format(spec=spec)
     dv_plot = training_delta_dv_plot.format(spec=spec)
     lae_plot = lae_delta_dv_plot.format(spec=spec)
@@ -81,9 +81,7 @@ def run_mcmc():
 
 
 
-def main(stage, latent_dim, model_name):
-    nepoch = 150
-    batch_size = 200
+def main(stage, latent_dim, model_name, nepoch, batch_size):
     nsample = 100_000
     year = "hsc"
     if stage == "gen_nz":
@@ -108,5 +106,7 @@ if __name__ == "__main__":
     parser.add_argument("stage", choices=["gen_nz", "gen_sacc", "gen_dv", "fit", "sim", "mcmc"])
     parser.add_argument("--latent-dim", type=int, default=12, help="Latent dimension size")
     parser.add_argument("--model-name", type=str, default='conv1', help="Name of model")
+    parser.add_argument("--epochs", type=int, default=150, help="Training epochs")
+    parser.add_argument("--batch-size", type=int, default=200, help="Batch size")
     args = parser.parse_args()
-    main(args.stage, args.latent_dim, args.model_name)
+    main(args.stage, args.latent_dim, args.model_name, args.epochs, args.batch_size)

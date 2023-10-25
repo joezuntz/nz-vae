@@ -6,6 +6,7 @@ import tensorflow as tf
 
 
 def main(
+    model_name,
     model_file,
     nz_realization_file,
     data_vector_file,
@@ -21,7 +22,7 @@ def main(
     ) = fit_model_lae.generate_data(nz_realization_file, data_vector_file)
 
 
-    model = lae.LAE.load_lae(model_file)
+    model = lae.LAE.load_lae(model_name, model_file)
     
 
     n = 100_000
