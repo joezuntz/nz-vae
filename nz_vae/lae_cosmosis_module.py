@@ -19,12 +19,13 @@ class LAESaccLike(sacc_like.SaccClLikelihood):
 
         if options.has_value("model_file"):
             model_file = options["model_file"]
+            model_name = options["model_name"]
             nz_file = options["nz_realization_file"]
             dv_file = options["data_vector_file"]
 
             _, _, _, (dv_mean, dv_std) = fit_model_lae.generate_data(nz_file, dv_file)
 
-            model = lae.LAE.load_lae(model_file)
+            model = lae.LAE.load_lae(model_name, model_file)
         else:
             return None, None, None
 
@@ -35,14 +36,14 @@ class LAESaccLike(sacc_like.SaccClLikelihood):
             return
         # Generate the latent parameters, which should be
         # normally distributed
-        latent_dim = self.model.latent_dim
+        latent_dim = self.lae_model.latent_dim
         section = "compressed_nz_parameters"
-        q = [block[section, f"theta_{i}"] for i in range(latent_dim)]
+        # This needs to be a 1 x latent_dim array for the predict method to be happy.
+        q = [[block[section, f"theta_{i}"] for i in range(latent_dim)]]
         q = np.array(q)
 
-        # might need a dimension of 1 here?
-        normalized_delta = self.lae_model.predict(q)
-        delta = normalized_delta * self.dv_std + self.dv_mean
+        normalized_delta = self.lae_model.decoder.predict(q, verbose=0)[0]
+        delta = normalized_delta * self.dv_std
 
         block["data_vector_contaminant", "delta"] = delta
         theory += delta

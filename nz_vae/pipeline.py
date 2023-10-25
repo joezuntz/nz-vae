@@ -4,6 +4,7 @@ from . import gen_training_nz
 from . import fit_model_lae
 from . import gen_simulated_dv
 from . import generate_empty_sacc
+from . import mcmc
 
 nz_realization_file = "data/nz_realization_array.npz"
 nz_realization_z_file = "data/nz_realization_z.npz"
@@ -19,6 +20,14 @@ training_delta_dv_plot = "data/training_delta_dv_{spec}.png"
 lae_delta_dv_plot = "data/lae_delta_dv_{spec}.png"
 chi2_plot = "data/chi2_{spec}.png"
 
+chain_file_fmt = "data/chain_{spec}.txt"
+anim_data_file_fmt = "data/anim_data_{spec}.npy"
+
+
+plot_file_fmt = "data/latent_param_plot_{spec}.pdf"
+anim_file_fmt = "data/latent_param_anim_{spec}.gif"
+
+nframe_per_dim = 11
 
 
 def generate_training_nz_realizations(nsample, year):
@@ -75,9 +84,33 @@ def generate_simulated_data_vectors(model_name, latent_dim, nepoch, batch_size, 
     gen_simulated_dv.main(model_name, model_file, nz_realization_file, data_vector_file, dv_plot, lae_plot, c2_plot)
 
 
-def run_mcmc():
+
+def make_plot_data(model_name, latent_dim, nepoch, batch_size, nsample):
+    spec = f"{model_name}_dim{latent_dim}_eps{nepoch}_bat{batch_size}_real{nsample}"
+    model_file = trained_model_file.format(spec=spec)
+    anim_data_file = anim_data_file_fmt.format(spec=spec)
+    from mpi4py.MPI import COMM_WORLD
+    comm = None if COMM_WORLD.size == 1  else COMM_WORLD
+    mcmc.make_plot_data(model_name, model_file, nz_realization_file, data_vector_file, latent_dim, comm, anim_data_file, nframe_per_dim)
+
+def make_plots(model_name, latent_dim, nepoch, batch_size, nsample):
+    spec = f"{model_name}_dim{latent_dim}_eps{nepoch}_bat{batch_size}_real{nsample}"
+    anim_data_file = anim_data_file_fmt.format(spec=spec)
+    plot_file = plot_file_fmt.format(spec=spec)
+    anim_file = anim_file_fmt.format(spec=spec)
+    mcmc.make_static_plot(anim_data_file, latent_dim, nframe_per_dim, plot_file)
+    mcmc.make_animated_plot(anim_data_file, latent_dim, nframe_per_dim, anim_file)
+
+
+def run_mcmc(model_name, latent_dim, nepoch, batch_size, nsample):
     # run mcmc with marginalization over latent space
-    pass
+    spec = f"{model_name}_dim{latent_dim}_eps{nepoch}_bat{batch_size}_real{nsample}"
+    model_file = trained_model_file.format(spec=spec)
+    chain_file = chain_file_fmt.format(spec=spec)
+    from mpi4py.MPI import COMM_WORLD
+    comm = None if COMM_WORLD.size == 1  else COMM_WORLD
+
+    mcmc.main(model_name, model_file, nz_realization_file, data_vector_file, latent_dim, comm, chain_file)
 
 
 
@@ -95,7 +128,11 @@ def main(stage, latent_dim, model_name, nepoch, batch_size):
     elif stage == "sim":
         generate_simulated_data_vectors(model_name, latent_dim, nepoch, batch_size, nsample)
     elif stage == "mcmc":
-        run_mcmc()
+        run_mcmc(model_name, latent_dim, nepoch, batch_size, nsample)
+    elif stage == "plot_data":
+        make_plot_data(model_name, latent_dim, nepoch, batch_size, nsample)
+    elif stage == "plots":
+        make_plots(model_name, latent_dim, nepoch, batch_size, nsample)
     else:
         raise ValueError(f"Unknown stage {stage}")
 
@@ -103,7 +140,7 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("stage", choices=["gen_nz", "gen_sacc", "gen_dv", "fit", "sim", "mcmc"])
+    parser.add_argument("stage", choices=["gen_nz", "gen_sacc", "gen_dv", "fit", "sim", "mcmc", "plot_data", "plots"])
     parser.add_argument("--latent-dim", type=int, default=12, help="Latent dimension size")
     parser.add_argument("--model-name", type=str, default='conv1', help="Name of model")
     parser.add_argument("--epochs", type=int, default=150, help="Training epochs")
