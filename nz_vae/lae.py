@@ -103,6 +103,41 @@ def make_conv3_model(nbin, nz, ndata, latent_dim, verbose=True):
     return encoder, decoder
 
 
+def make_conv4_model(nbin, nz, ndata, latent_dim, verbose=True):
+    encoder_inputs = keras.Input(shape=(nbin, nz))
+    x = tf.keras.layers.Reshape((nbin, nz, 1))(encoder_inputs)
+    x = layers.Conv2D(32, 3, strides=1, padding="same")(x)
+    x = layers.Conv2D(32, 3, strides=2, padding="same")(x)
+    x = layers.Conv2D(32, 3, strides=4, padding="same")(x)
+    x = layers.Conv2D(32, 3, strides=8, padding="same")(x)
+    x = layers.Conv2D(32, 3, strides=16, padding="same")(x)
+    x = layers.Flatten()(x)
+    x = layers.Dense(latent_dim)(x)
+    x = layers.Dense(latent_dim)(x)
+    z_mean = layers.Dense(latent_dim, name="z_mean")(x)
+    z_log_var = layers.Dense(latent_dim, name="z_log_var")(x)
+    z = Sampling()([z_mean, z_log_var])
+    encoder = keras.Model(encoder_inputs, [z_mean, z_log_var, z], name="encoder")
+
+    decoder_inputs = keras.Input(shape=(latent_dim,))
+    x = layers.Dense(64)(decoder_inputs)
+    x = layers.Reshape((64, 1))(x)
+    x = layers.Conv1DTranspose(32, 3, strides=3, padding="same")(x)
+    x = layers.Conv1DTranspose(32, 3, strides=2, padding="same")(x)
+    x = layers.Conv1DTranspose(32, 3, strides=1, padding="same")(x)
+    x = layers.Flatten()(x)
+    x = layers.Dense(ndata)(x)
+    decoder_outputs = x    
+
+    decoder = keras.Model(decoder_inputs, decoder_outputs, name="decoder")
+
+    if verbose:
+        encoder.summary()
+        decoder.summary()
+
+    return encoder, decoder
+
+
 
 class LAE(keras.Model):
     def __init__(self, encoder, decoder, nbin, nz, ndata, latent_dim,  kl_weight=1, **kwargs):
@@ -189,6 +224,7 @@ class LAE(keras.Model):
             "conv1": make_conv1_model,
             "conv2": make_conv2_model,
             "conv3": make_conv3_model,
+            "conv4": make_conv4_model,
         }
         make_function = functions[model_name]
         encoder, decoder = make_function(nbin, nz, ndata, latent_dim)
