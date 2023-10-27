@@ -24,7 +24,10 @@ def setup_parameters(model_name, model_file, nz_realization_file, data_vector_fi
 
 def main(model_name, model_file, nz_realization_file, data_vector_file, latent_dim, comm, chain_file):
     ini, values, priors = setup_parameters(model_name, model_file, nz_realization_file, data_vector_file, latent_dim)
+    ini["runtime", "sampler"] = "star"
     ini["output", "filename"] = chain_file
+    ini.remove_option("lae_sacc_like", "model_file")
+    values.remove_section("compressed_nz_parameters")
 
     if comm is None:
         return cosmosis.run_cosmosis(ini, values=values, priors=priors)

@@ -13,19 +13,16 @@ import pymaster as nmt
 import os
 
 
-def generate_empty_sacc(nz_z_file, nz_realization_file, sacc_file):
+def generate_empty_sacc(nz_z_file, nz_realization_file, sacc_file, n_eff_tot):
     # mask_name = "data/lsst_binary_mask.fits"
-    workspace_name = "data/workspace_{}.fits"
+
+    sigma_e = 0.26
 
     # set up, we consider two mocks
     ## y1-spec-z-lim, neff=9.78
     ## y10-deep, neff=24.4
 
-    tag = "y1-spec-z-lim"
-    sigma_e = 0.26
-    n_eff_tot = 9.78  # in per sqarcmin
-
-
+    
     nz_data = np.load(nz_realization_file)['arr_0']
     nz_data = nz_data.mean(axis=0)
     z = np.load(nz_z_file)['arr_0']
@@ -116,10 +113,12 @@ def generate_empty_sacc(nz_z_file, nz_realization_file, sacc_file):
                     window_ind=n,
                 )
     s.save_fits(sacc_file, overwrite=True)
+    return num_z_bins, n_eff
 
 
-def main(nz_z_file, nz_realization_file, sacc_file):
-    generate_empty_sacc(nz_z_file, nz_realization_file, sacc_file)
+def main(nz_z_file, nz_realization_file, sacc_file, n_eff_tot, fsky):
+    num_z_bins, n_eff = generate_empty_sacc(nz_z_file, nz_realization_file, sacc_file, n_eff_tot)
+    print("N_eff = ", n_eff)
     from tjpcov.covariance_calculator import CovarianceCalculator
 
     config = {
@@ -127,18 +126,14 @@ def main(nz_z_file, nz_realization_file, sacc_file):
             'sacc_file': sacc_file,
             'cosmo': 'data/fiducial_cosmology.yml',
             'cov_type': ['FourierGaussianFsky'],
-            'Ngal_source_0': 3.3,
-            'Ngal_source_1': 3.3,
-            'Ngal_source_2': 3.3,
-            'Ngal_source_3': 3.3,
-            'sigma_e_source_0': 0.26,
-            'sigma_e_source_1': 0.26,
-            'sigma_e_source_2': 0.26,
-            'sigma_e_source_3': 0.26,
             'IA': 0.0
         },
-        'GaussianFsky': {'fsky': 0.01}
+        'GaussianFsky': {'fsky': fsky}
     }
+
+    for i in range(num_z_bins):
+        config["tjpcov"][f"Ngal_source_{i}"] = n_eff[i]
+        config["tjpcov"][f"sigma_e_source_{i}"] = 0.26
 
     cc = CovarianceCalculator(config)
     cov = cc.get_covariance()

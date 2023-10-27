@@ -5,14 +5,16 @@ import matplotlib.pyplot as plt
 import numpy as np
 import scipy.integrate
 import sys
+import os
 
 
-def setup_pipeline():
+def setup_pipeline(sacc_file):
     ini = cosmosis.Inifile("data/params.ini")
     values = cosmosis.Inifile(ini["pipeline", "values"])
 
+    ini["sacc_nz", "nz_file"] = sacc_file
+    ini["lae_sacc_like", "data_file"] = sacc_file
     ini["camb", "feedback"] = 0
-
     values.remove_section("wl_photoz_errors")
 
     cosmosis.logs.set_verbosity("quiet")
@@ -37,7 +39,7 @@ def override_nz(pipe, z, nz):
 
 def override_likelihood(pipe):
     names = [p.name for p in pipe.modules]
-    index = names.index("sacc_like")
+    index = names.index("lae_sacc_like")
     module = pipe.modules[index]
 
     # orig_ydata = module.data.data_y.copy()
@@ -47,7 +49,6 @@ def override_likelihood(pipe):
     mean_nz_results = pipe.run_results(pipe.start_vector())
 
     y0 = mean_nz_results.block["data_vector", "2pt_theory"]
-    ndata = len(y0)
 
     # scaling = abs(y0 / orig_ydata).mean()
     # print("Rescaling covariance by", scaling**2)
@@ -90,13 +91,13 @@ def load_nz_data(nz_realization_z_file, nz_realization_file):
     return z, nz_data
 
 
-def main(nz_realization_z_file, nz_realization_file, data_vector_file, nsample, comm):
+def main(nz_realization_z_file, nz_realization_file, data_vector_file, sacc_file, nsample, comm):
     import mpi4py.MPI
 
     rank = comm.rank
     size = comm.size
 
-    pipe = setup_pipeline()
+    pipe = setup_pipeline(sacc_file)
 
     z, nz_data = load_nz_data(nz_realization_z_file, nz_realization_file)
 
