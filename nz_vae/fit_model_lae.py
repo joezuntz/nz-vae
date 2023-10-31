@@ -14,7 +14,7 @@ def generate_data(input_file, output_file):
     std_input = input_data.std(axis=0)
     std_input[std_input == 0] = 1
     input_data = (input_data - mean_input) / std_input
-    print("Loaded input data")
+    print("Loaded input data", input_data.shape, input_data.max())
     
     # output shape is (nrealizations, ndata)
     output_zip = np.load(output_file, allow_pickle=True)['arr_0'].item()
@@ -26,7 +26,7 @@ def generate_data(input_file, output_file):
     std_output = output_data.std(axis=0)
     std_output[std_output == 0] = 1
     output_data = (output_data - mean_output) / std_output
-    print("Loaded output data")
+    print("Loaded output data", output_data.shape, output_data.max())
 
     return input_data, output_data, (mean_input, std_input), (mean_output, std_output)
 
