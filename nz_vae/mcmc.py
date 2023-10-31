@@ -3,6 +3,7 @@ import numpy as np
 import sys
 import matplotlib.pyplot as plt
 import matplotlib.animation
+import os 
 
 def setup_parameters(model_name, model_file, nz_realization_file, data_vector_file, latent_dim):
     ini = cosmosis.Inifile("data/params.ini")
@@ -22,9 +23,10 @@ def setup_parameters(model_name, model_file, nz_realization_file, data_vector_fi
         priors[nz, f"theta_{i}"] = "gaussian 0.0 1.0"
     return ini, values, priors
 
-def main(model_name, model_file, nz_realization_file, data_vector_file, latent_dim, comm, chain_file):
+def main(run, model_name, model_file, nz_realization_file, data_vector_file, latent_dim, comm, chain_file):
+    os.environ["RUN_NAME"] = run
     ini, values, priors = setup_parameters(model_name, model_file, nz_realization_file, data_vector_file, latent_dim)
-    ini["runtime", "sampler"] = "star"
+    ini["runtime", "sampler"] = "emcee"
     ini["output", "filename"] = chain_file
     ini.remove_option("lae_sacc_like", "model_file")
     values.remove_section("compressed_nz_parameters")

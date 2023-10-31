@@ -36,7 +36,7 @@ def generate_training_nz_realizations(nsample, year):
     if year == "hsc":
         z, samples = gen_training_nz.generate_hsc(alpha_dir_hsc, nsample)
     else:
-        z, samples = gen_training_nz.generate_interpolated_alpha(
+        z, samples = gen_training_nz.generate(
             year=year, alpha_dir=alpha_dir, nsample=nsample
         )
     np.savez(nz_realization_file, samples)
@@ -124,7 +124,7 @@ def run_mcmc(model_name, latent_dim, nepoch, batch_size, nsample):
     from mpi4py.MPI import COMM_WORLD
     comm = None if COMM_WORLD.size == 1  else COMM_WORLD
 
-    mcmc.main(model_name, model_file, nz_realization_file, data_vector_file, latent_dim, comm, chain_file)
+    mcmc.main(run, model_name, model_file, nz_realization_file, data_vector_file, latent_dim, comm, chain_file)
 
 
 

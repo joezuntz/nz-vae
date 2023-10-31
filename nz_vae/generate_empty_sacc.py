@@ -53,7 +53,7 @@ def generate_empty_sacc(nz_z_file, nz_realization_file, sacc_file, n_eff_tot):
         h=0.7,
         n_s=0.95,
         sigma8=0.8,
-        transfer_function="bbks",
+        # transfer_function="bbks",
     )
 
 

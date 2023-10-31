@@ -29,9 +29,6 @@ def override_nz(pipe, z, nz):
     module = pipe.modules[index]
     z = z.copy()
     nz = nz.copy()
-    # breakpoint()
-    # z[0] = 0.0
-    # nz[:, 0] = 0.0
     new_data = (z, {i: nz_i for i, nz_i in enumerate(nz)})
     module.data['nz_source'] = new_data
 
@@ -42,16 +39,9 @@ def override_likelihood(pipe):
     index = names.index("lae_sacc_like")
     module = pipe.modules[index]
 
-    # orig_ydata = module.data.data_y.copy()
-    # orig_covmat = module.data.cov.copy()
-    # orig_precmat = module.data.inv_cov.copy()
-
     mean_nz_results = pipe.run_results(pipe.start_vector())
 
     y0 = mean_nz_results.block["data_vector", "2pt_theory"]
-
-    # scaling = abs(y0 / orig_ydata).mean()
-    # print("Rescaling covariance by", scaling**2)
 
     module.data.data_y[:] = y0
     # module.data.cov[:, :] = orig_covmat
@@ -70,12 +60,6 @@ def get_theory_vector(pipe, z, nz):
     mu = r.block["data_vector", "2pt_data"]
     sigma = r.block["data_vector", "2pt_covariance"].diagonal() ** 0.5
     x = np.arange(sigma.size)
-    # breakpoint()
-    # plt.plot(x, (y - mu) / sigma, '+')
-    # plt.plot(x, y, '-')
-    # plt.errorbar(x, mu, sigma, fmt='.')
-    # plt.show()
-    # xxx
     return y, r.like, chi2
 
 
